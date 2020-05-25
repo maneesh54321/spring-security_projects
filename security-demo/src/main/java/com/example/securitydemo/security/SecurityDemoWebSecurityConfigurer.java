@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,12 +32,23 @@ public class SecurityDemoWebSecurityConfigurer extends WebSecurityConfigurerAdap
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+
+        AuthenticationFailureHandler authenticationFailureHandler =  new AuthenticationEntryPointFailureHandler(new JwtAuthenticationEntryPoint());
+        JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(authenticationManager(), authenticationFailureHandler);
+        JWTRequestFilter jwtRequestFilter = new JWTRequestFilter("/**", authenticationManager(), authenticationFailureHandler);
+
         http
-                .addFilterAfter(jwtAuthenticationFilter(), ConcurrentSessionFilter.class)
-                .addFilterAfter(jwtRequestFilter(), JwtAuthenticationFilter.class)
+                .addFilterAfter(jwtAuthenticationFilter, ConcurrentSessionFilter.class)
+                .addFilterAfter(jwtRequestFilter, JwtAuthenticationFilter.class)
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().csrf().disable()
-                .authorizeRequests().antMatchers("/**").hasRole("ADMIN");
+                .and().authorizeRequests()
+                .antMatchers("/user").hasRole("ADMIN")
+                .and().csrf().disable();
+    }
+
+    @Override
+    public void configure(WebSecurity web) {
+        web.ignoring().antMatchers(HttpMethod.POST, "/user");
     }
 
     @Override
@@ -51,20 +64,5 @@ public class SecurityDemoWebSecurityConfigurer extends WebSecurityConfigurerAdap
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return new JwtAuthenticationEntryPoint();
-    }
-
-    @Bean
-    public AuthenticationFailureHandler authenticationFailureHandler() {
-        return new AuthenticationEntryPointFailureHandler(new JwtAuthenticationEntryPoint());
-    }
-
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-        return new JwtAuthenticationFilter(authenticationManager(), authenticationFailureHandler());
-    }
-
-    @Bean
-    public JWTRequestFilter jwtRequestFilter() throws Exception {
-        return new JWTRequestFilter("/**", authenticationManager(), authenticationFailureHandler());
     }
 }
