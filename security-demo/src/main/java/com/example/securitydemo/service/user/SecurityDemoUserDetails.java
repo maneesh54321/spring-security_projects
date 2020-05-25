@@ -1,4 +1,4 @@
-package com.example.securitydemo.security.service;
+package com.example.securitydemo.service.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Setter;

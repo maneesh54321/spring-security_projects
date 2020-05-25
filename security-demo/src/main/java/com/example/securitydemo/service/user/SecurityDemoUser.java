@@ -1,4 +1,4 @@
-package com.example.securitydemo.security.service;
+package com.example.securitydemo.service.user;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +20,7 @@ class SecurityDemoUser {
     private Integer id;
 
     private String username;
+
     private String password;
 
     private String roles;
@@ -30,6 +31,7 @@ class SecurityDemoUser {
     public SecurityDemoUser(String username, String password) {
         this.username = username;
         this.password = password;
+        this.addRole("user");
     }
 
     public Set<String> getAllRoles() {
